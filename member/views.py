@@ -104,7 +104,7 @@ class Candidate(APIView):
         user = json.loads(bytes.decode(request.user, "utf-8"))
         data = request.data
         user_object = models.UserInfo.objects.get(username=user.get('username'))
-        if user_object.voted == True:
+        if user_object.voted:
             return Response('已投票')
         queryset = models.UserInfo.objects.filter(username=data.get('candidate'))
         vote = queryset[0].vote + 1
