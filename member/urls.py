@@ -19,12 +19,12 @@ from django.conf.urls import include
 from member import views
 
 urlpatterns = [
-    path('login/', views.LoginView.as_view()),
+    path('login/', views.LoginView.as_view()), # 會員登入認證
     path('user/', views.UserView.as_view()),
-    path('email/', views.Email.as_view()),
-    path('candidate/', views.Candidate.as_view()),
-    path('candidatedetail/<username>', views.CandidateDetail.as_view()),
-    path('photovisit/<id>', views.PhotoVisit.as_view()),
-    path('photorank/', views.PhotoRank.as_view()),
+    path('email/', views.Email.as_view()),     # 參賽後寄電子郵件
+    path('candidate/', views.Candidate.as_view()), # 候選人列表
+    path('candidatedetail/<username>', views.CandidateDetail.as_view()), # 每位候選人資料(包含照片)
+    path('photovisit/<id>', views.PhotoVisit.as_view()), # 照片瀏覽數
+    path('photorank/', views.PhotoRank.as_view()), # 照片排行榜前五名
 
 ]

@@ -9,7 +9,7 @@ class UserInfo(models.Model):
     candidate = models.IntegerField(null=True)
     ig_account = models.CharField(verbose_name='ig帳號', max_length=32, default="account")
     ig_avatar = models.TextField(blank=True, null=True)
-    # ig_photo = models.TextField(blank=True, null=True)
+
     def __str__(self):
         return self.username
 

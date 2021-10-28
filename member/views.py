@@ -20,6 +20,7 @@ import requests
 from requests.cookies import RequestsCookieJar
 from headers import rua
 import re
+from rest_framework import status
 
 redis_connect = get_redis_connection()
 # class CreateAccountView(APIView):
@@ -34,14 +35,15 @@ redis_connect = get_redis_connection()
 
 class LoginView(APIView): # 會員認證
     def post(self, request, *args, **kwargs):
-        user_object = models.UserInfo.objects.filter(**request.data).first()
+        data = request.data
+        user_object = models.UserInfo.objects.get(username=data.get('username'))
         if not user_object:
             return Response('登入失敗')
         random_stirng = str(uuid.uuid4())
-        _dict = {'id': user_object.id, 'username': user_object.username}
-        redis_connect.set(random_stirng, json.dumps(_dict), 259200) # token設為key
-        # 存redis259200秒等於72小時
-        return Response(random_stirng)
+        d = {'id': user_object.id, 'username': user_object.username}
+        redis_connect.set(random_stirng, json.dumps(d), 259200) # token設為key
+        # 259200秒等於72小時
+        return Response({'code': 0, 'data': d}, status=status.HTTP_200_OK)
 
 
 class Tokenauthentication(BaseAuthentication):
@@ -164,6 +166,12 @@ class IgSpider():
             return Response('錯誤')
 
 
+class CandidateDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IgPhoto
+        fields = "__all__"
+
+
 class CandidateDetail(APIView):
 
     def get(self, request, username, *args, **kwargs):
@@ -171,12 +179,12 @@ class CandidateDetail(APIView):
         try:
             five_photo = []
             queryset = models.IgPhoto.objects.filter(username=username)
+            ser = CandidateDetailSerializer(queryset, many=True)
             for i in queryset:
                 five_photo.append(i.ig_photo)
-
         except:
             return Response('查無此人帳號')
-        return Response({'ig_photo':five_photo})
+        return Response(ser.data)
 
     def post(self, request, username):
         # 爬完存到資料庫
@@ -192,12 +200,19 @@ class CandidateDetail(APIView):
         return Response(ig_photo)
 
 
+class PhotoVisitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.IgPhoto
+        fields = "__all__"
+
+
 class PhotoVisit(APIView):
-    def get(self, request, id): # 列出瀏覽數
-        visit = models.IgPhoto.objects.get(id=id).visit
-        visit += 1
-        visit.save()
-        return Response(visit)
+    def get(self, request, id):  # 列出瀏覽數
+        queryset = models.IgPhoto.objects.filter(id=id)
+        visit_times = queryset[0].visit + 1
+        queryset.update(visit=visit_times)
+        ser = PhotoVisitSerializer(instance=queryset, many=True)
+        return Response(ser.data)
 
 
 class PhotoRankSerializer(serializers.ModelSerializer):
