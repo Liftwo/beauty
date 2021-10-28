@@ -65,9 +65,9 @@ class UserView(APIView):  # 登入後傳送到的頁面
     authentication_classes = [Tokenauthentication]
 
     def get(self, request, *args, **kwargs):
-        print(request.user)  # UserInfo object (1)
-        print(request.auth)
-        if request.user:
+        user = json.loads(bytes.decode(request.user, "utf-8"))
+        print(user)
+        if user:
             return Response('登入所以可以看到')
         return Response('不是會員')
 
@@ -76,7 +76,8 @@ class Email(APIView):  # 報名參加後寄信通知
     authentication_classes = [Tokenauthentication]
     def post(self, request, *args, **kwargs):
         # 註記為參賽者
-        username = request.user.username
+        user = json.loads(bytes.decode(request.user, "utf-8"))
+        username = user.get('username')
         models.UserInfo.objects.filter(username=username).update(candidate=1)
         # 獲取該會員的信箱
         email = request.user.email
@@ -92,12 +93,24 @@ class CandidateSerializer(serializers.ModelSerializer):
 
 
 class Candidate(APIView):
+    authentication_classes = [Tokenauthentication]
     def get(self, request, *args, **kwargs):
         # 列出所有參賽者
         query_set = models.UserInfo.objects.filter(candidate=1) # 參賽者標註為1
         ser = CandidateSerializer(query_set, many=True)
         return Response(ser.data)
 
+    def post(self, request): # 投票
+        user = json.loads(bytes.decode(request.user, "utf-8"))
+        data = request.data
+        user_object = models.UserInfo.objects.get(username=user.get('username'))
+        if user_object.voted == True:
+            return Response('已投票')
+        queryset = models.UserInfo.objects.filter(username=data.get('candidate'))
+        vote = queryset[0].vote + 1
+        queryset.update(vote=vote, voted=True)
+        ser = CandidateSerializer(instance=queryset, many=True)
+        return Response("voted")
 
 class IgSpider():
     def __init__(self):
@@ -239,15 +252,20 @@ class SearchSerializer(serializers.ModelSerializer):
 class Search(APIView):
     def get(self, request):
         data = request.query_params.get('username')
-        queryset = models.UserInfo.objects.filter(username=data)
+        queryset = models.UserInfo.objects.filter(username__icontains=data)
         ser = SearchSerializer(queryset, many=True)
         return Response(ser.data)
 
 
 class Vote(APIView):
     authentication_classes = [Tokenauthentication]
-    def post(self, request):
+    def get(self, request):
         pass
+    def post(self, request):
+        data = request.data.get('username')
+
+
+
 
 
 

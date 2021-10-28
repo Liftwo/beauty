@@ -6,9 +6,11 @@ class UserInfo(models.Model):
     password = models.CharField(verbose_name='用戶密碼', max_length=64)
     token = models.CharField(verbose_name='用戶token', max_length=64, null=True, blank=True)
     email = models.CharField(verbose_name='信箱', max_length=32, default="@gmail")
-    candidate = models.IntegerField(null=True)
+    candidate = models.IntegerField(null=True)  # 1:參賽者 0:一般會員
     ig_account = models.CharField(verbose_name='ig帳號', max_length=32, default="account")
     ig_avatar = models.TextField(blank=True, null=True)
+    vote = models.IntegerField(default=0)
+    voted = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username
@@ -25,3 +27,5 @@ class IgPhoto(models.Model):  # 每位候選人皆有五張照片
 
     def __str__(self):
         return str(self.visit)
+
+
