@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'beauty',
     'member',
+    'django_filters'
 ]
 
 MIDDLEWARE = [
@@ -132,7 +133,9 @@ STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 10
+    'PAGE_SIZE': 10,
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',),
 }
 
 REDIS_SERVER = '127.0.0.1'

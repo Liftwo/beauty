@@ -21,6 +21,7 @@ from requests.cookies import RequestsCookieJar
 from headers import rua
 import re
 from rest_framework import status
+from django_filters import rest_framework as filters
 
 redis_connect = get_redis_connection()
 # class CreateAccountView(APIView):
@@ -226,6 +227,24 @@ class PhotoRank(APIView):
         query_set = models.IgPhoto.objects.order_by('visit')[::-5]
         ser = PhotoRankSerializer(query_set, many=True)
         return Response(ser.data)
+
+
+class SearchSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserInfo
+        fields = "__all__"
+
+
+class Search(APIView):
+    def get(self, request):
+        data = request.query_params.get('username')
+        queryset = models.UserInfo.objects.filter(username=data)
+        ser = SearchSerializer(queryset, many=True)
+        return Response(ser.data)
+
+
+
+
 
 
 

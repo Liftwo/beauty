@@ -26,5 +26,6 @@ urlpatterns = [
     path('candidatedetail/<username>', views.CandidateDetail.as_view()), # 每位候選人資料(包含照片)
     path('photovisit/<id>', views.PhotoVisit.as_view()), # 照片瀏覽數
     path('photorank/', views.PhotoRank.as_view()), # 照片排行榜前五名
+    path('search/', views.Search.as_view()), # 搜尋功能
 
 ]
