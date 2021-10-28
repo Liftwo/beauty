@@ -179,9 +179,10 @@ class CandidateDetail(APIView):
         # 每位候選人列出五張ig照片
         try:
             five_photo = []
-            queryset = models.IgPhoto.objects.filter(username=username)
-            ser = CandidateDetailSerializer(queryset, many=True)
-            for i in queryset:
+            user = models.UserInfo.objects.get(username=username)
+            photo = user.igphoto_set.all()
+            ser = CandidateDetailSerializer(photo, many=True)
+            for i in photo:
                 five_photo.append(i.ig_photo)
         except:
             return Response('查無此人帳號')
@@ -241,6 +242,13 @@ class Search(APIView):
         queryset = models.UserInfo.objects.filter(username=data)
         ser = SearchSerializer(queryset, many=True)
         return Response(ser.data)
+
+
+class Vote(APIView):
+    authentication_classes = [Tokenauthentication]
+    def post(self, request):
+        pass
+
 
 
 
