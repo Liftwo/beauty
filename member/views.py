@@ -257,12 +257,6 @@ class Search(APIView):
         return Response(ser.data)
 
 
-class Vote(APIView):
-    authentication_classes = [Tokenauthentication]
-    def get(self, request):
-        pass
-    def post(self, request):
-        data = request.data.get('username')
 
 
 

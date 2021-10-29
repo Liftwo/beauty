@@ -27,6 +27,5 @@ urlpatterns = [
     path('photovisit/<id>', views.PhotoVisit.as_view()), # 照片瀏覽數
     path('photorank/', views.PhotoRank.as_view()), # 照片排行榜前五名
     path('search/', views.Search.as_view()), # 搜尋功能
-    path('vote/', views.Vote.as_view()),
 
 ]
