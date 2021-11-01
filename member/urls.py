@@ -18,6 +18,7 @@ from django.urls import path
 from django.conf.urls import include
 from member import views
 
+
 urlpatterns = [
     path('login/', views.LoginView.as_view()), # 會員登入認證
     path('user/', views.UserView.as_view()),
@@ -27,5 +28,7 @@ urlpatterns = [
     path('photovisit/<id>', views.PhotoVisit.as_view()), # 照片瀏覽數
     path('photorank/', views.PhotoRank.as_view()), # 照片排行榜前五名
     path('search/', views.Search.as_view()), # 搜尋功能
+    path('task/', views.create_task),
+    path('testcelery/', views.TestCelery.as_view()),
 
 ]

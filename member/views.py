@@ -22,8 +22,14 @@ from headers import rua
 import re
 from rest_framework import status
 from django_filters import rest_framework as filters
+from member.tasks import vote, add
+from celery.result import AsyncResult
+from django.db.models import F
+from django.http import JsonResponse
+from django.core.exceptions import ObjectDoesNotExist
 
 redis_connect = get_redis_connection()
+
 # class CreateAccountView(APIView):
 #     redis_conn = get_redis_connection('loginapp')
 
@@ -33,13 +39,15 @@ redis_connect = get_redis_connection()
     #     nickname = request.data.get('nickname')
     #     email = request.data.get('email')
 
-
+# {"username":""}
 class LoginView(APIView): # 會員認證
     def post(self, request, *args, **kwargs):
         data = request.data
-        user_object = models.UserInfo.objects.get(username=data.get('username'))
-        if not user_object:
-            return Response('登入失敗')
+        try:
+            user_object = models.UserInfo.objects.get(username=data.get('username'))
+        except ObjectDoesNotExist:
+            return Response('帳號錯誤')
+
         random_stirng = str(uuid.uuid4())
         d = {'id': user_object.id, 'username': user_object.username}
         redis_connect.set(random_stirng, json.dumps(d), 259200) # token設為key
@@ -100,17 +108,14 @@ class Candidate(APIView):
         ser = CandidateSerializer(query_set, many=True)
         return Response(ser.data)
 
-    def post(self, request): # 投票
+    def post(self, request):  # 投票
         user = json.loads(bytes.decode(request.user, "utf-8"))
         data = request.data
-        user_object = models.UserInfo.objects.get(username=user.get('username'))
-        if user_object.voted:
-            return Response('已投票')
+        result = vote.delay(user, data)
         queryset = models.UserInfo.objects.filter(username=data.get('candidate'))
-        vote = queryset[0].vote + 1
-        queryset.update(vote=vote, voted=True)
-        ser = CandidateSerializer(instance=queryset, many=True)
-        return Response("voted")
+        ser = CandidateSerializer(queryset, many=True)
+
+        return Response(ser.data)
 
 class IgSpider():
     def __init__(self):
@@ -191,15 +196,16 @@ class CandidateDetail(APIView):
     def get(self, request, username, *args, **kwargs):
         # 每位候選人列出五張ig照片
         try:
-            five_photo = []
+            five_photos = []
             user = models.UserInfo.objects.get(username=username)
-            photo = user.igphoto_set.all()
-            ser = CandidateDetailSerializer(photo, many=True)
-            for i in photo:
-                five_photo.append(i.ig_photo)
+            # photo = user.igphoto_set.all()
+            photo_r = models.IgPhoto.objects.filter(userinfo__username=username)
+            # ser = CandidateDetailSerializer(photo_r, many=True)
+            for i in photo_r:
+                five_photos.append(i.ig_photo)
         except:
             return Response('查無此人帳號')
-        return Response(ser.data)
+        return Response(five_photos)
 
     def post(self, request, username):
         # 爬完存到資料庫
@@ -238,7 +244,7 @@ class PhotoRankSerializer(serializers.ModelSerializer):
 
 class PhotoRank(APIView):
     def get(self, request):
-        query_set = models.IgPhoto.objects.order_by('visit')[::-5]
+        query_set = models.IgPhoto.objects.order_by('-visit')[:5]
         ser = PhotoRankSerializer(query_set, many=True)
         return Response(ser.data)
 
@@ -256,6 +262,24 @@ class Search(APIView):
         ser = SearchSerializer(queryset, many=True)
         return Response(ser.data)
 
+
+def create_task(request):
+    print('請求來了')
+
+
+class TestCelery(APIView):
+    # def get(self, request):
+    #     data = add.delay(2,10)
+    #     result = AsyncResult(data.task_id)
+    #     # result = json.loads(bytes.decode(data, "utf-8"))
+    #     return JsonResponse({'id':result.task_id})
+    def post(self, request):
+        data = request.data
+
+        queryset = models.UserInfo.objects.get(username=data.get('candidate'))
+        queryset.vote = F('vote') + 1
+        queryset.save()
+        return Response('成功')
 
 
 
