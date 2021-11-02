@@ -111,7 +111,7 @@ class Candidate(APIView):
     def post(self, request):  # 投票
         user = json.loads(bytes.decode(request.user, "utf-8"))
         data = request.data
-        result = vote.delay(user, data)
+        result = vote.delay(user, data)  # 啟用celery
         queryset = models.UserInfo.objects.filter(username=data.get('candidate'))
         ser = CandidateSerializer(queryset, many=True)
 
