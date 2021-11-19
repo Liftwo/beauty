@@ -25,7 +25,7 @@ SECRET_KEY = 'lh%yp7=fyf%xet0%2peoucy%-()0$z#4pp8zee#^1gn6t1i(6-'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.1.114', '127.0.0.1']
 
 
 # Application definition
@@ -40,8 +40,11 @@ INSTALLED_APPS = [
     'rest_framework',
     'beauty',
     'member',
-
+    'channels',
+    'chat',
 ]
+
+ASGI_APPLICATION = 'beauty.routing.application'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,7 +61,7 @@ ROOT_URLCONF = 'beauty.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -154,6 +157,7 @@ CACHES = {
             'CONNECTION_POOL_KWARGS': {
                 'max_connections': 500
             },
+            'REDIS_CLIENT_KWARGS': {'decode_responses':True},
         }
     },
 }
@@ -172,3 +176,38 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379/2'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
 CELERY_TASK_SERIALIZER = 'json'
+CELERY_WORKER_MAX_TASKS_PER_CHILD=500
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'beauty.settings'
+
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'formatters': {
+#         'normal': {
+#             'format': '%(levelname)s | %(asctime)s | app: %(module)s pid: %(process)d th: %(thread)d | %(message)s',
+#         },
+#     },
+#     'handlers': {
+#         'console': {
+#             'class': 'logging.StreamHandler',  # Default logs to stderr
+#             'formatter': 'normal',  # use the above "normal" formatter
+#         }
+#     },
+#     'loggers': {
+#         'django': {  # Modify logger in some modules
+#             'handlers': ['console'],
+#             'level': 'DEBUG',
+#             'propagate': True,
+#         },
+#     },
+# }
+
+CHANNEL_LAYERS = {
+    'default':{
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'GONFIG':{
+            "hosts":[('127.0.0.1', 6379)],
+        },
+    },
+}

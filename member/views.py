@@ -1,6 +1,5 @@
 import json
 import uuid
-
 from bs4 import BeautifulSoup
 from django.shortcuts import render
 from rest_framework.views import APIView
@@ -21,12 +20,12 @@ from requests.cookies import RequestsCookieJar
 from headers import rua
 import re
 from rest_framework import status
-from django_filters import rest_framework as filters
 from member.tasks import vote, add
 from celery.result import AsyncResult
 from django.db.models import F
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
+from rest_framework.renderers import TemplateHTMLRenderer
 
 redis_connect = get_redis_connection()
 
@@ -74,7 +73,7 @@ class UserView(APIView):  # 登入後傳送到的頁面
 
     def get(self, request, *args, **kwargs):
         user = json.loads(bytes.decode(request.user, "utf-8"))
-        print(user)
+        print(request.user)
         if user:
             return Response('登入所以可以看到')
         return Response('不是會員')
@@ -230,7 +229,8 @@ class PhotoVisitSerializer(serializers.ModelSerializer):
 class PhotoVisit(APIView):
     def get(self, request, id):  # 列出瀏覽數
         queryset = models.IgPhoto.objects.filter(id=id)
-        visit_times = queryset[0].visit + 1
+        # visit_times = queryset[0].visit + 1
+        visit_times = F('visit') + 1
         queryset.update(visit=visit_times)
         ser = PhotoVisitSerializer(instance=queryset, many=True)
         return Response(ser.data)
@@ -282,7 +282,51 @@ class TestCelery(APIView):
         return Response('成功')
 
 
+class FriendListSerializer(serializers.ModelSerializer):
 
+    class Meta:
+        model = models.UserInfo
+        fields = ['username', 'ig_avatar']
+        read_only_fields = fields
+
+    # def get_user(self, obj):
+    #     if obj.user:
+    #         return {"username": obj.username, "ig_avatar": obj.ig_avatar}
+
+
+class FriendList(APIView):
+    renderer_classes = [TemplateHTMLRenderer]
+    template_name = 'friend.html'
+
+    def get(self, request, *args, **kwargs):
+        # uuid = request.query_params.get('username')
+        uuid = 'me'
+        print(uuid)
+        try:
+            user = models.UserInfo.objects.get(username=uuid)
+            print(user)
+        except:
+            return Response({'無此人'})
+        context = {'user': user.id}
+        try:
+            obj_friends = user.friend_set.all().values()
+        except:
+            return Response({'沒朋友'})
+        # 找出該人的朋友們的頭像
+        friends_info = []
+        for i in obj_friends:
+            friend_name = i['friend']
+            ig_avatar = list(models.UserInfo.objects.filter(username=friend_name).values_list('ig_avatar', flat=True))
+            for j in ig_avatar:
+                d = {'friend':friend_name, 'ig_avatar':j}
+            friends_info.append(d)
+        # 使用序列化
+        # data_ = models.Friend.objects.select_related('user').filter(user=user)
+        # print('friend', data_)
+        # ser = FriendListSerializer(data_, many=True)
+        # print('結果',ser.data)
+
+        return Response({'data': friends_info})
 
 
 

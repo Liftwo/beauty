@@ -29,3 +29,8 @@ class IgPhoto(models.Model):  # 每位候選人皆有五張照片
         return str(self.visit)
 
 
+class Friend(models.Model):
+    user = models.ForeignKey(UserInfo, on_delete=models.CASCADE)
+    friend = models.CharField(max_length=32)  # nickname
+
+
