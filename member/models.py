@@ -11,6 +11,7 @@ class UserInfo(models.Model):
     ig_avatar = models.TextField(blank=True, null=True)
     vote = models.IntegerField(default=0)
     voted = models.BooleanField(default=False)
+    status = models.BooleanField(default=False)
 
     def __str__(self):
         return self.username

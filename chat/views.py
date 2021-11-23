@@ -5,6 +5,13 @@ import requests
 from member.models import UserInfo
 from rest_framework import serializers
 from rest_framework.response import Response
+from django.contrib.auth import login, logout
+from django.contrib.auth.forms import AuthenticationForm
+# from django.core.urlresolvers import reverse
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User
+from .models import UserProfile
+
 
 
 class ChatRoom(View):
@@ -39,13 +46,26 @@ def chat(request):
 def realtime(request):
     return render(request, 'realtime.html')
 
-def user(request):
-    return render(request, 'user.html')
 
-def get_friend_data(request):
-    raw_data = UserInfo()
-    info = raw_data['']
-
+def user_list(request):
+    users = UserProfile.objects.all()
+    print(users)
+    return render(request, 'user.html', {'users':users})
 
 
+from django.contrib import auth
 
+
+def post_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        user = User.objects.get(username=username)
+        print(user)
+        if user:
+            auth.login(request, user)
+            return redirect('/chat/userlist/')
+        else:
+            print('非使用者')
+            return redirect('/chat/login/')
+    else:
+        return render(request, 'log_in.html', locals())

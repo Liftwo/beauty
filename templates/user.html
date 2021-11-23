@@ -1,10 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% extends 'base.html' %}
 
-</body>
-</html>
+{% block content %}
+  {% for user in users%}
+    <tr>
+     <td> {{user.id}} </td>
+     <td> {{user.status}} </td>
+    </tr>
+  {% endfor%}
+{% endblock content %}
+
+{% block script %}
+  <script>
+    var socket = new WebSocket('ws://' + window.location.host + '/ws/userlist/');
+
+    socket.onopen = function (e) {
+          console.log ("open", e);
+        }
+    socket.onmessage = function (e) {
+          console.log ("message", e)
+          var userData = JSON.parse (e.data)
+          $ ('# new_user'). html (userData.html_users)
+        }
+    socket.onerror = function (e) {
+      console.log ("error", e)
+    }
+    socket.onclose = function (e) {
+      console.log ("close", e)
+    }
+  </script>
+{% endblock script %}
