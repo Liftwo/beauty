@@ -30,6 +30,6 @@ urlpatterns = [
     path('search/', views.Search.as_view()), # 搜尋功能
     path('task/', views.create_task),
     path('testcelery/', views.TestCelery.as_view()),
-    path('oook/'),
+    path('ooo/'),
 
 ]
