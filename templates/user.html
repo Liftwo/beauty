@@ -2,10 +2,11 @@
 {% load static %}
 {% block content %}
   {% for user in users%}
-    <tr>
-     <td> {{user.id}} </td>
-     <td> {{user.status}} </td>
-    </tr>
+
+  <tr>
+    <td> {{user.id}} </td>
+    <td> {{user.status}} </td>
+  </tr>
 
   {% endfor%}
 <form action="{% url 'logout' %}" method="post">
@@ -16,7 +17,7 @@
         <input type="submit" value="登出" />
 </form>
 {% endblock content %}
-<script src="{% static '/s_upload.js' %}"></script>
+
 {% block script %}
   <script>
     var socket = new WebSocket('ws://' + window.location.host + '/ws/userlist/');

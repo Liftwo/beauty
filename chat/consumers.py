@@ -77,7 +77,7 @@ class TrackConsumer(AsyncWebsocketConsumer):
     async def send_status(self):
         users = UserProfile.objects.all()
         html_users = render_to_string("user.html", {'users': users})
-        await self.channel_layer.group_send('users', {"type": "user_update", "event": "Change Status", "html_users": html_users})
+        await self.channel_layer.group_send('users', {"type": "user_update", "event": "Change Status", "users": users})
 
     async def user_update(self, event):
         print(event)
