@@ -69,3 +69,7 @@ def post_login(request):
             return redirect('/chat/login/')
     else:
         return render(request, 'log_in.html', locals())
+
+
+
+

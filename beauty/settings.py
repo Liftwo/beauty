@@ -211,3 +211,8 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+LOGOUT_REDIRECT_URL = '/chat/login/'
+
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+STATIC_URL = '/static/'

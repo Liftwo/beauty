@@ -1,0 +1,15 @@
+'<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <m
+eta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">\n  <meta http-equiv="X-UA
+-Compatible" content="ie=edge">\n  <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">\n  <title>Example Ch
+annels</title>\n</head>\n<body>\n  <div class="container">\n    <br>\n    \n  \n    <tr>\n     <td> 1 </td>\n     <td> False </td>\n    </tr>\n\n  \n
+   <tr>\n     <td> 2 </td>\n     <td> True </td>\n    </tr>\n\n  \n    <tr>\n     <td> 3 </td>\n     <td> False </td>\n    </tr>\n\n  \n<form action="
+/chat/logout/" method="post">\n        \n        <table>\n            \n        </table>\n        <input type="submit" value="登出" />\n</form>\n\n  <
+/div>\n  <script src="//code.jquery.com/jquery-3.1.1.min.js"></script>\n  \n  <script>\n    var socket = new WebSocket(\'ws://\' + window.location.hos
+t + \'/ws/userlist/\');\n\n    socket.onopen = function (e) {\n          console.log ("open", e);\n        }\n    socket.onmessage = function (e) {\n
+         console.log("message", e)\n          var userData = JSON.parse(e.data)\n          $ (\'#new_user\').html(userData.html_users)\n        }\n
+ socket.onerror = function (e) {\n      console.log ("error", e)\n    }\n    socket.onclose = function (e) {\n      console.log ("close", e)\n    }\n
+ </script>\n\n</body>\n</html>'}

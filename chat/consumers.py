@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from .models import UserProfile
 from django.template.loader import render_to_string
 from channels.db import database_sync_to_async
+from django.db.models import Sum
 
 
 logger = logging.getLogger('django')
@@ -79,12 +80,16 @@ class TrackConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send('users', {"type": "user_update", "event": "Change Status", "html_users": html_users})
 
     async def user_update(self, event):
-        await self.socket.send_json(event)
-        print('user_update', event)
+        print(event)
+        await self.send(json.dumps(event))
 
     @database_sync_to_async
     def update_user_status(self, user, status):
         return UserProfile.objects.filter(user_id=user.pk).update(status=status)
+
+    @database_sync_to_async
+    def total_number_online(self):
+        return UserProfile.aggregate(Sum('status'))
 
 
 class WSConsumer(WebsocketConsumer):
