@@ -1,14 +1,14 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-  {% for user in users%}
 
-  <tr>
-    <td> {{user.id}} </td>
-    <td> {{user.status}} </td>
-  </tr>
-
-  {% endfor%}
+<tbody id="user_data">
+    {% for i in data %}
+    <tr>
+        <td> {{ i.user_id}} </td>
+    </tr>
+    {% endfor %}
+</tbody>
 <form action="{% url 'logout' %}" method="post">
         {% csrf_token %}
         <table>
@@ -24,11 +24,13 @@
 
     socket.onopen = function (e) {
           console.log ("open", e);
+
         }
     socket.onmessage = function (e) {
           console.log("message", e)
-          var userData = JSON.parse(e.data)
-          $('#new_user').html(userData.html_users)
+          var data = JSON.parse(e.data);
+          console.log("data", data)
+          document.getElementById('user_data').innerText = data
         }
     socket.onerror = function (e) {
       console.log ("error", e)

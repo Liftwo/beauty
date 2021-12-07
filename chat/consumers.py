@@ -3,6 +3,7 @@ import json
 import logging
 from asgiref.sync import async_to_sync
 from redis import Redis
+from django_redis import get_redis_connection
 from random import randint
 from time import sleep
 from django.contrib.auth.models import User
@@ -10,6 +11,7 @@ from .models import UserProfile
 from django.template.loader import render_to_string
 from channels.db import database_sync_to_async
 from django.db.models import Sum
+from rest_framework import serializers
 
 
 logger = logging.getLogger('django')
@@ -76,20 +78,23 @@ class TrackConsumer(AsyncWebsocketConsumer):
 
     async def send_status(self):
         users = UserProfile.objects.all()
+        _users = list(UserProfile.objects.all().values('user_id','status'))
         html_users = render_to_string("user.html", {'users': users})
-        await self.channel_layer.group_send('users', {"type": "user_update", "event": "Change Status", "users": users})
+        await self.channel_layer.group_send('users', {"type": "user_update", "event": "Change Status", "data":_users})
 
     async def user_update(self, event):
-        print(event)
-        await self.send(json.dumps(event))
+
+        await self.send(json.dumps({'data':event['data']}))
 
     @database_sync_to_async
     def update_user_status(self, user, status):
         return UserProfile.objects.filter(user_id=user.pk).update(status=status)
 
-    @database_sync_to_async
-    def total_number_online(self):
-        return UserProfile.aggregate(Sum('status'))
+    async def redis_connect(self):
+        redis_connect = get_redis_connection()
+        value = redis_connect.get("asgi:group:users")
+        print(value)
+        await self.send(text_data=json.dumps({'online_number': value}))
 
 
 class WSConsumer(WebsocketConsumer):
@@ -98,6 +103,28 @@ class WSConsumer(WebsocketConsumer):
         for i in range(1000):
             self.send(json.dumps({'message': randint(1, 100)}))
             sleep(1)
+
+
+class NumberOfOnline(WebsocketConsumer):
+    db = Redis(host='127.0.0.1', port=6379, db=0)
+
+    async def websocket_connect(self, message):
+        await self.accept()
+        await self.channel_layer.group_add('users', self.channel_name)
+        user = self.scope['user']
+        print('登入', user)
+
+    async def websocket_disconnect(self, message):
+        await self.channel_layer.group_discard('users', self.channel_name)
+        user = self.scope['user']
+        print('斷開', user)
+
+    async def redis_connect(self):
+        redis_connect = get_redis_connection()
+        value = redis_connect.get("asgi:group:users")
+        print(value)
+
+
 
 
 

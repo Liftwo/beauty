@@ -59,16 +59,20 @@ from django.contrib import auth
 def post_login(request):
     if request.method == 'POST':
         username = request.POST['username']
-        user = User.objects.get(username=username)
-        print(user)
-        if user:
-            auth.login(request, user)
+        obj_user = User.objects.get(username=username)
+        print(obj_user)
+        if obj_user:
+            auth.login(request, obj_user)
             return redirect('/chat/userlist/')
         else:
             print('非使用者')
             return redirect('/chat/login/')
     else:
-        return render(request, 'log_in.html', locals())
+        return render(request, 'log_in.html')
+
+
+def online_number(request):
+    return render(request, 'online_number.html')
 
 
 

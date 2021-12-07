@@ -31,6 +31,6 @@ urlpatterns = [
     path('task/', views.create_task),
     path('testcelery/', views.TestCelery.as_view()),
     path('friendlist/', views.FriendList.as_view()),
-    path('oook/'),
+    # path('oook/'),
 
 ]

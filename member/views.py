@@ -245,6 +245,7 @@ class PhotoRankSerializer(serializers.ModelSerializer):
 class PhotoRank(APIView):
     def get(self, request):
         query_set = models.IgPhoto.objects.order_by('-visit')[:5]
+        print(query_set)
         ser = PhotoRankSerializer(query_set, many=True)
         return Response(ser.data)
 
