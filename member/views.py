@@ -119,8 +119,8 @@ class Candidate(APIView):
 class IgSpider():
     def __init__(self):
         self.path = 'D:\DeepLearning\chromedriver.exe'
-        self.sbaccount = 'tsaizooey'
-        self.sbpd = 'jondae350'
+        self.sbaccount = ''
+        self.sbpd = ''
 
     def ig_token(self):  # 獲得登入後的cookie
         driver = webdriver.Chrome(self.path)
