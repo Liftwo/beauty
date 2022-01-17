@@ -5,15 +5,14 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 import random
-from django_redis import get_redis_connection
 from . import models
 from rest_framework.authentication import BaseAuthentication
-from rest_framework.permissions import BasePermission
 from django.core.mail import send_mail
 from django_redis import get_redis_connection
 from rest_framework import exceptions
 from rest_framework import serializers
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 import time
 import requests
 from requests.cookies import RequestsCookieJar
@@ -23,22 +22,13 @@ from rest_framework import status
 from member.tasks import vote, add
 from celery.result import AsyncResult
 from django.db.models import F
-from django.http import JsonResponse
+from django.http import HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.renderers import TemplateHTMLRenderer
 
 redis_connect = get_redis_connection()
 
-# class CreateAccountView(APIView):
-#     redis_conn = get_redis_connection('loginapp')
 
-    # def post(self, request, *args, **kwargs):
-    #     username = request.data.get('username')
-    #     password = request.data.get('password')
-    #     nickname = request.data.get('nickname')
-    #     email = request.data.get('email')
-
-# {"username":""}
 class LoginView(APIView): # 會員認證
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -108,9 +98,10 @@ class Candidate(APIView):
         return Response(ser.data)
 
     def post(self, request):  # 投票
-        user = json.loads(bytes.decode(request.user, "utf-8"))
+        # user = json.loads(bytes.decode(request.user, "utf-8"))
         data = request.data
-        result = vote.delay(user, data)  # 啟用celery
+        vote.delay(data)  # 啟用celery
+
         queryset = models.UserInfo.objects.filter(username=data.get('candidate'))
         ser = CandidateSerializer(queryset, many=True)
 
@@ -119,8 +110,8 @@ class Candidate(APIView):
 class IgSpider():
     def __init__(self):
         self.path = 'D:\DeepLearning\chromedriver.exe'
-        self.sbaccount = 'tsaizooey'
-        self.sbpd = 'jondae350'
+        self.sbaccount = ''
+        self.sbpd = ''
 
     def ig_token(self):  # 獲得登入後的cookie
         driver = webdriver.Chrome(self.path)
@@ -170,8 +161,7 @@ class IgSpider():
             json_part = json_part[json_part.find('=') + 2:-1]
             data = json.loads(json_part)
             a = data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges']
-            # 總文章數
-            count = data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['count']
+            count = data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['count'] # 總文章數
             userid = data['entry_data']['ProfilePage'][0]['graphql']['user']['id']
             print('輸入的帳號為：', id, '共有', count, '篇貼文')
             all_photo_link = []
@@ -274,6 +264,8 @@ class TestCelery(APIView):
     #     # result = json.loads(bytes.decode(data, "utf-8"))
     #     return JsonResponse({'id':result.task_id})
     def post(self, request):
+        time.sleep(3)
+
         data = request.data
 
         queryset = models.UserInfo.objects.get(username=data.get('candidate'))
@@ -327,6 +319,68 @@ class FriendList(APIView):
         # print('結果',ser.data)
 
         return Response({'data': friends_info})
+
+
+class IgCommentsSerializer(serializers.Serializer):
+    post = serializers.CharField(max_length=1000)
+    poster = serializers.CharField(max_length=200)
+
+
+class IgComments(APIView):
+    def __init__(self):
+        self.path = '/Applications/chromedriver'
+        self.sbaccount = '帳號'
+        self.sbpd = '密碼'
+
+    def post(self, request):
+        options = Options()
+        options.add_argument("--headless")
+        driver = webdriver.Chrome(self.path, options=options)
+        driver.implicitly_wait(3)
+        driver.get('https://www.instagram.com/') # 直接跳轉到文章
+        time.sleep(2)
+        account = driver.find_elements_by_name('username')[0]
+        pd = driver.find_elements_by_name('password')[0]
+        account.send_keys(self.sbaccount)
+        pd.send_keys(self.sbpd)
+        driver.find_element_by_xpath('//*[@id="loginForm"]/div/div[3]/button').click()  # 登入
+        time.sleep(3)
+        driver.get('https://www.instagram.com/p/CYXqAMuBX0e/')
+        more_xpath = '//*[@id="react-root"]/section/main/div/div[1]/article/div/div[2]/div/div[2]/div[1]/ul/li/div/button/div'
+        time.sleep(3)
+        while True:
+            try:
+                time.sleep(2)
+                driver.find_element_by_xpath(more_xpath).click()
+                print('下一頁')
+            except:
+                print('最後一頁')
+                break
+        crawl_comments = []
+        comments = driver.find_element_by_class_name("XQXOT").find_elements_by_class_name("Mr508")
+        n = 1
+        for c in comments:
+            poster = c.find_element_by_css_selector('h3._6lAjh span').text
+            post_xpath = f'//*[@id="react-root"]/section/main/div/div[1]/article/div/div[2]/div/div[2]/div[1]/ul/ul[{n}]/div/li/div/div/div[2]/span'.format(n=n)
+            time.sleep(2)
+            post = c.find_element_by_xpath(post_xpath).text
+            crawl_comments.append({'poster':poster, 'post':post})
+            n+=1
+        ser = IgCommentsSerializer(crawl_comments, many=True)
+        return Response(ser.data)
+
+
+class With_Celery(APIView):
+    def post(self, request):
+        add.delay(3, 5)
+        return HttpResponse("Celery作業成功")
+
+
+class No_Celery(APIView):
+    def post(self, request):
+        time.sleep(2)
+        result = 3+5
+        return HttpResponse(result)
 
 
 
